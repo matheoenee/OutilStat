@@ -149,7 +149,8 @@ def space_method(leakage):
     return HW
     
 # function that convert leakage into HW by slice method (Linge)
-def slice_method(leakage,n):
+def slice_method(leakage):
+    n = len(leakage)
     permutation = sorted(range(len(leakage)), key=lambda k: leakage[k])
     # Inverting the permutations
     inv_permutation = np.argsort(permutation)
