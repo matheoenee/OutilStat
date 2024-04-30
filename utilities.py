@@ -51,7 +51,7 @@ hw = [
   2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6, 3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
   3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
 ]
-
+# function that generate electric power (leakage)
 def generate_ep(a,b,sigma,hw):
     noise = random.gauss(0,sigma)
     return a*(hw + noise) + b
@@ -120,26 +120,27 @@ def generate_leakages(n,sigma,k):
 
 # function that convert leakage into HW by space methode
 def space_method(leakage):
-    b = [0,0,0,0,0,0,0,0,0]
+    y = [0,0,0,0,0,0,0,0,0]
 
     min_value = min(leakage)
     max_value = max(leakage)
     space = (max_value - min_value)/8
 
-    b[0] = min_value + space/2
+    y[0] = min_value + space/2
     for i in range(1,9):
-        b[i] = b[i-1] + space
+        y[i] = y[i-1] + space
 
     HW = []
     for power in leakage:
         for i in range(9):
-            if power < b[i]:
+            if power < y[i]:
                 HW.append(i)
                 break
     return HW
     
 # function that convert leakage into HW by slice method (Linge)
-def slice_method(leakage,n):
+def slice_method(leakage):
+    n = len(leakage)
     permutation = sorted(range(len(leakage)), key=lambda k: leakage[k])
     # Inverting the permutations
     inv_permutation = np.argsort(permutation)

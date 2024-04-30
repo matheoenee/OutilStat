@@ -26,8 +26,8 @@ def attack_simulation(method, loop, n, sigma, Models):
             hy = space_method(ly)
         # slice method
         else:
-            hm = slice_method(lm,n)
-            hy = slice_method(ly,n)
+            hm = slice_method(lm)
+            hy = slice_method(ly)
 
         # generating empirical distribution D
         D = np.zeros((9, 9),dtype=int)
