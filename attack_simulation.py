@@ -17,8 +17,9 @@ def attack_simulation(method, loop, n, sigma, Models):
     for i in range(loop):
 
         k = random.randint(0, 255) # random key generation
-
-        lm, ly = generate_leakages(n,sigma,k)
+        sigma_m = sigma
+        sigma_y = sigma
+        lm, ly = generate_leakages(n, sigma_m, sigma_y, k)
 
         # space method
         if method == 0:

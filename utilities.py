@@ -52,6 +52,16 @@ hw = [
   3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7, 4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
 ]
 
+couples_weight = [(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7), (0, 8),
+                  (1, 0), (1, 1), (1, 2), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (1, 8),
+                  (2, 0), (2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7), (2, 8),
+                  (3, 0), (3, 1), (3, 2), (3, 3), (3, 4), (3, 5), (3, 6), (3, 7), (3, 8),
+                  (4, 0), (4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), (4, 7), (4, 8),
+                  (5, 0), (5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7), (5, 8),
+                  (6, 0), (6, 1), (6, 2), (6, 3), (6, 4), (6, 5), (6, 6), (6, 7), (6, 8),
+                  (7, 0), (7, 1), (7, 2), (7, 3), (7, 4), (7, 5), (7, 6), (7, 7), (7, 8),
+                  (8, 0), (8, 1), (8, 2), (8, 3), (8, 4), (8, 5), (8, 6), (8, 7), (8, 8)]
+
 def generate_ep(a,b,sigma,hw):
     noise = random.gauss(0,sigma)
     return a*(hw + noise) + b
@@ -97,9 +107,9 @@ def get_key_rank(Models,D,k):
     return rank 
 
 # function that generate leakage given n, sigma and key
-def generate_leakages(n,sigma,k):
-    am, bm = random.randint(5,20), random.randint(0,150) # parameters for message electric power
-    ay, by = random.randint(5,20), random.randint(0,150) # parameters for ciphertext electric power
+def generate_leakages(n, sigma_m, sigma_y, k):
+    am, bm = random.randint(5, 20), random.randint(0, 150) # parameters for message electric power
+    ay, by = random.randint(5, 20), random.randint(0, 150) # parameters for ciphertext electric power
 
     lm = []
     ly = []
@@ -110,8 +120,8 @@ def generate_leakages(n,sigma,k):
         hy = hw[int(SBOX[k^m])] # haming weight of y 
 
         # electric power simulation with noise
-        ep_m = generate_ep(am,bm,sigma,hm)
-        ep_y = generate_ep(ay,by,sigma,hy)
+        ep_m = generate_ep(am,bm,sigma_m,hm)
+        ep_y = generate_ep(ay,by,sigma_y,hy)
 
         lm.append(ep_m)
         ly.append(ep_y)
