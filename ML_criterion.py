@@ -2,6 +2,7 @@ from random import random, randint
 from utilities import *
 from numpy import sqrt, pi, exp
 from models import Models
+from variance_analysis import var_analysis
 
 
 def prob_noise(sigma_m, sigma_y, h: tuple, hh: tuple):
@@ -22,35 +23,38 @@ def total_prob(h, k, sigma_m, sigma_y):
         S += prob_h_hh * hh_prob
     return S
 
-def prob_k(h, k, sigma_m, sigma_y, P_k):
+def prob_k(h, k, sigma_m, sigma_y, P_k, N):
     """
     Avec la formule des probabilités totales, on peut obtenir P(h) en calculant la somme des P(h*)P(h|h*)
     Or P(h|h*) est déjà calculé pour la proba du bruit.
     """
-    P_h = 1  #0
-    """for hh in couples_weight:
-        P_h += 1/81 * prob_noise(sigma_m, sigma_y, h, hh)  # not sure about that"""
+    P_h = 1/N
     return (total_prob(h, k, sigma_m, sigma_y) * P_k / P_h)
 
+def ML_criterion(hm, hy, sigma_m, sigma_y):
+    H = [(hm[i], hy[i]) for i in range(N)]
+    PROB_k = [1 / 256 for i in range(256)]  # probabilities of each key, initialized to uniform distribution P(k)
+
+    for h in H:
+        for k in range(256):
+            PROB_k[k] = prob_k(h, k, sigma_m, sigma_y, PROB_k[k], len(H))
+
+    return PROB_k.index(max(PROB_k))
 
 ### starts program
 K = randint(1, 255)
 
-N = 256
+N = 512
 
-sigma_m = 1.5
-sigma_y = 1.5
+sigma_m = 0.5
+sigma_y = 0.5
 
-hm, hy = generate_leakages(N, sigma_m, sigma_y, K)
-H = [(hm[i], hy[i]) for i in range(N)]
 
-PROB_k = [1/256 for i in range(256)]  #probabilities of each key, initialized to uniform distribution P(k)
+lm, ly = generate_leakages(N, sigma_m, sigma_y, K)
+var_result_m = var_analysis(sigma_m, lm)
+var_result_y = var_analysis(sigma_y, ly)
 
-for h in H:
-    for k in range(256):
-        PROB_k[k] = prob_k(h, k, sigma_m, sigma_y, PROB_k[k])
-
-k = PROB_k.index(max(PROB_k))
-print(k)
-print(PROB_k)
-print(K)
+print(f"right key: {K}")
+for hm in var_result_m:
+    for hy in var_result_y:
+        print(f"key deduced by ML criterion: {ML_criterion(hm, hy, sigma_m, sigma_y)}")
