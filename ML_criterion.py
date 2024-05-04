@@ -18,43 +18,39 @@ def total_prob(h, k, sigma_m, sigma_y):
     S = 0
     k_model = Models[k]
     for hh in couples_weight:
-        hh_prob = k_model[hh[0], hh[1]]  #P((hh_m,hh_y)|k) NEED TO BE COMPUTE !
+        hh_prob = k_model[hh[0], hh[1]]  #P((hh_m,hh_y)|k), precomputes in the models
         prob_h_hh = prob_noise(sigma_m, sigma_y, h, hh)
         S += prob_h_hh * hh_prob
     return S
 
-def prob_k(h, k, sigma_m, sigma_y, P_k, N):
-    """
-    Avec la formule des probabilités totales, on peut obtenir P(h) en calculant la somme des P(h*)P(h|h*)
-    Or P(h|h*) est déjà calculé pour la proba du bruit.
-    """
-    P_h = 1/N
-    return (total_prob(h, k, sigma_m, sigma_y) * P_k / P_h)
-
 def ML_criterion(hm, hy, sigma_m, sigma_y):
     H = [(hm[i], hy[i]) for i in range(N)]
     PROB_k = [1 / 256 for i in range(256)]  # probabilities of each key, initialized to uniform distribution P(k)
-
+    i = 0
     for h in H:
         for k in range(256):
-            PROB_k[k] = prob_k(h, k, sigma_m, sigma_y, PROB_k[k], len(H))
+            PROB_k[k] *= total_prob(h, k, sigma_m, sigma_y) * N**(0.4672)  # for not extra divergence
+        i += 1
+        if i % 50 == 0:
+            print(PROB_k)
+    return PROB_k, PROB_k.index(max(PROB_k))
 
-    return PROB_k.index(max(PROB_k))
 
 ### starts program
 K = randint(1, 255)
 
-N = 512
+N = 2000
 
 sigma_m = 0.5
 sigma_y = 0.5
 
-
 lm, ly = generate_leakages(N, sigma_m, sigma_y, K)
-var_result_m = var_analysis(sigma_m, lm)
-var_result_y = var_analysis(sigma_y, ly)
-
+print("first step : variance analysis")
+hm, hy = var_analysis(sigma_m, lm), var_analysis(sigma_y, ly)
+print("DONE")
+print("ML criterion method")
+k = ML_criterion(hm, hy, sigma_m, sigma_y)
+print("DONE\n\nresults :")
+print(k[0])
+print(f"key deduced by ML criterion: {k[1]}")
 print(f"right key: {K}")
-for hm in var_result_m:
-    for hy in var_result_y:
-        print(f"key deduced by ML criterion: {ML_criterion(hm, hy, sigma_m, sigma_y)}")

@@ -113,20 +113,22 @@ def generate_leakages(n, sigma_m, sigma_y, k):
 
     lm = []
     ly = []
-
+    # Hm = []
+    # Hy = []
     for i in range(n):
         m = random.randint(0, 255) # random plaintext message
-        hm = hw[m] # haming weight of m 
-        hy = hw[int(SBOX[k^m])] # haming weight of y 
+        hm = hw[m]  #haming weight of m
+        hy = hw[int(SBOX[k^m])]  #haming weight of y
+        # Hm.append(hm)
+        # Hy.append(hy)
 
         # electric power simulation with noise
-        ep_m = generate_ep(am,bm,sigma_m,hm)
-        ep_y = generate_ep(ay,by,sigma_y,hy)
+        ep_m = generate_ep(am, bm, sigma_m, hm)
+        ep_y = generate_ep(ay, by, sigma_y, hy)
 
         lm.append(ep_m)
         ly.append(ep_y)
-
-    return lm,ly
+    return lm, ly  #, Hm, Hy
 
 # function that convert leakage into HW by space methode
 def space_method(leakage):
