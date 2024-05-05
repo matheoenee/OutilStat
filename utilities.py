@@ -2,6 +2,8 @@ import random
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy import array, sqrt, var, mean
+from numpy import sqrt, pi, exp
 
 SBOX = [
    0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5, 0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
@@ -62,6 +64,18 @@ couples_weight = [(0, 0), (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6), (0, 7)
                   (7, 0), (7, 1), (7, 2), (7, 3), (7, 4), (7, 5), (7, 6), (7, 7), (7, 8),
                   (8, 0), (8, 1), (8, 2), (8, 3), (8, 4), (8, 5), (8, 6), (8, 7), (8, 8)]
 
+Models = []
+for k in range(256):
+    Mk = np.zeros((9, 9), dtype=int)
+    for m in range(256):
+        hm = hw[m]
+        hy = hw[int(SBOX[k ^ m])]
+        Mk[hm][hy] += 1
+    Mk = Mk.astype(float)  # float conversion
+    Mk /= 256
+    Models.append(Mk)
+
+# function that generate electrical power
 def generate_ep(a,b,sigma,hw):
     noise = random.gauss(0,sigma)
     return a*(hw + noise) + b
@@ -88,23 +102,6 @@ def print_distribution(D):
           np.zeros(len(z_data)),
           1, 1, z_data )
     plt.show()
-
-# function that return the key rank
-def get_key_rank(Models,D,k):
-    dist = []
-    for key in range(256):
-        d = distribution_distance(Models[key], D)
-        dist.append(d)
-
-    rank = 0
-    while True:
-        min_d = min(dist)
-        find_k = dist.index(min_d)
-        if find_k == k:
-            break
-        dist[find_k] = 1  # we remove the last find key by setting the distance to 1
-        rank += 1
-    return rank 
 
 # function that generate leakage given n, sigma and key
 def generate_leakages(n, sigma_m, sigma_y, k):
@@ -171,3 +168,70 @@ def slice_method(leakage):
     converted_leakage = sorted_leakage.astype(int)
     # Applying the inverse permutation to return to the original state
     return converted_leakage[inv_permutation]
+
+# function that silmulate classical CPA attack, return list of key ordered by model distance
+def classical_CPA(hm,hy,n):
+    D = np.zeros((9, 9),dtype=int)
+    for j in range(n):
+        HWm = hm[j]
+        HWy = hy[j]
+        D[HWm][HWy] += 1
+    D = D.astype(float)
+    D /= n
+
+    distance_dict = {}
+    for key in range(256):
+        distance_dict[key] = distribution_distance(Models[key], D)
+
+    sorted_distance_dict = dict(sorted(distance_dict.items(), key=lambda item: item[1]))
+    return sorted_distance_dict
+
+# function that return the noise probability (used in ML criterion)
+def prob_noise(sigma_m, sigma_y, h: tuple, hh: tuple):
+    exp_m = -1/2 * ((h[0]-hh[0])/sigma_m)**2
+    exp_y = -1/2 * ((h[1]-hh[1])/sigma_m) ** 2
+
+    Pm = 1/(sigma_m*sqrt(2*pi)) * exp(exp_m)
+    Py = 1/(sigma_y*sqrt(2*pi)) * exp(exp_y)
+
+    return Pm * Py
+
+# function that return the total probability (used in ML criterion)
+def total_prob(h, k, sigma_m, sigma_y):
+    S = 0
+    k_model = Models[k]
+    for hh in couples_weight:
+        hh_prob = k_model[hh[0], hh[1]]  #P((hh_m,hh_y)|k), precomputes in the models
+        prob_h_hh = prob_noise(sigma_m, sigma_y, h, hh)
+        S += prob_h_hh * hh_prob
+    return S
+
+# function that convert leakage into real HW
+def var_analysis(sigma, L: list):
+    var_l = var(array(L))
+    alpha1 = sqrt((var_l-sigma)/2)
+    beta1 = mean(array(L)) - 4*alpha1
+    H1 = []
+    IH1 = []
+    for l in L:
+        H1.append((l-beta1)/alpha1)
+    return H1  #H1 for the real values
+
+# function that simulate attack using ML criterion, return list of key ordered by probability
+def ML_criterion(hm, hy, sigma_m, sigma_y, n):
+    H = [(hm[i], hy[i]) for i in range(n)]
+    prob_dict = {i: 1 / 256 for i in range(256)}  # probabilities of each key, initialized to uniform distribution P(k)
+    for h in H:
+        for k in range(256):
+            prob_dict[k] *= total_prob(h, k, sigma_m, sigma_y) * n**(0.4672)  # for not extra divergence
+
+    sorted_prob_dict = dict(sorted(prob_dict.items(), key=lambda item: item[1], reverse=True))
+    return sorted_prob_dict
+
+# function that return the key rank
+def get_key_rank(sorted_dict,k):
+    rank = None
+    keys = list(sorted_dict.keys())
+    if k in keys:
+        rank = keys.index(k)
+    return rank
