@@ -7,7 +7,7 @@ from utilities import *
 from attack_simulation import *
 
 if __name__ == "__main__":
-    average_kr = attack_simulation(2, 1, 1, 512, 0.5, Models)
+    average_kr = attack_simulation(0, 1, 1, 512, 0.5, Models)
     """
     sigma_value = [0.5, 0.7, 1, 1.5]
     results = {}
