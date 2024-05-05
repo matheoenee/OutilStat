@@ -3,7 +3,6 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 from utilities import *
-#from models import *
 from attack_simulation import *
 
 if __name__ == "__main__":

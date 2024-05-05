@@ -169,6 +169,17 @@ def slice_method(leakage):
     # Applying the inverse permutation to return to the original state
     return converted_leakage[inv_permutation]
 
+# function that convert leakage into real HW
+def var_analysis(sigma, L: list):
+    var_l = var(array(L))
+    alpha1 = sqrt((var_l-sigma)/2)
+    beta1 = mean(array(L)) - 4*alpha1
+    H1 = []
+    IH1 = []
+    for l in L:
+        H1.append((l-beta1)/alpha1)
+    return H1  #H1 for the real values
+
 # function that silmulate classical CPA attack, return list of key ordered by model distance
 def classical_CPA(hm,hy,n):
     D = np.zeros((9, 9),dtype=int)
@@ -205,17 +216,6 @@ def total_prob(h, k, sigma_m, sigma_y):
         prob_h_hh = prob_noise(sigma_m, sigma_y, h, hh)
         S += prob_h_hh * hh_prob
     return S
-
-# function that convert leakage into real HW
-def var_analysis(sigma, L: list):
-    var_l = var(array(L))
-    alpha1 = sqrt((var_l-sigma)/2)
-    beta1 = mean(array(L)) - 4*alpha1
-    H1 = []
-    IH1 = []
-    for l in L:
-        H1.append((l-beta1)/alpha1)
-    return H1  #H1 for the real values
 
 # function that simulate attack using ML criterion, return list of key ordered by probability
 def ML_criterion(hm, hy, sigma_m, sigma_y, n):
